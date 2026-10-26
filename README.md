@@ -11,7 +11,7 @@ PostgreSQL schema migration for the **Pure** relational schema ecosystem: carrie
 
 The PostgreSQL storage packages name every physical object after a content hash: the schema after `SchemaHash`, each table after `TableHash`, each column after `ColumnHash`, each index and foreign key after its own hash. Any change to a schema therefore changes the names its data must live under. Without a migration, the changed schema gets fresh, empty storage and the old data is left behind.
 
-`PostgreSqlMigratedSchema` takes the schema as it was (the *source*), the schema as it is now (the *target*) and an optional mapping between their tables and columns. The first time one of its members is read, it does the whole migration:
+`PostgreSqlMigratedSchema` takes the schema as it was (the *source*), the schema as it is now (the *target*) and an optional mapping between their tables and columns, either separately or as one `ISchemaMigration` value. The first time one of its members is read, it does the whole migration:
 
 1. drops foreign keys and indexes that the target no longer has;
 2. drops tables that are not mapped to a target table;
@@ -25,9 +25,12 @@ Steps 1–4 run in one `DO` block, only if the source storage exists. Step 5 run
 
 | Type | Role |
 |---|---|
-| `PostgreSqlMigratedSchema : ISchema` | `(ISchema source, ISchema target, IDbConnection connection)` and `(ISchema source, ISchema target, IEnumerable<ITableMapping> tables, IDbConnection connection)`. Lazily migrates once, then exposes the target's members. |
+| `PostgreSqlMigratedSchema : ISchema` | `(ISchema source, ISchema target, IDbConnection connection)`, `(ISchema source, ISchema target, IEnumerable<ITableMapping> tables, IDbConnection connection)` and `(ISchemaMigration migration, IDbConnection connection)`. Lazily migrates once, then exposes the target's members. |
+| `SchemaMigration : ISchemaMigration` | The whole migration as one value: `(ISchema source, ISchema target)` and `(ISchema source, ISchema target, IEnumerable<ITableMapping> tables)`. |
 | `ITableMapping` / `TableMapping` | Pairs a source table with a target table, with optional column mappings: `(ITable source, ITable target)` and `(ITable source, ITable target, IEnumerable<IColumnMapping> columns)`. |
 | `IColumnMapping` / `ColumnMapping` | Pairs a source column with a target column: `(IColumn source, IColumn target)`. |
+
+`ISchemaMigration`, `ITableMapping` and `IColumnMapping` come from [`Pure.RelationalSchema.Migration.Abstractions`](https://github.com/kudima03/Pure.RelationalSchema.Migration.Abstractions); this package provides the PostgreSQL migration and the plain record implementations.
 
 ## Mapping rules
 
@@ -36,6 +39,12 @@ Steps 1–4 run in one `DO` block, only if the source storage exists. Step 5 run
 - **A renamed or retyped column needs a mapping to keep its data.** Otherwise it is dropped and the target column is added with the default value.
 - **Explicit mappings win.** If a target table or column is explicitly mapped from something else, an identical source counterpart is not mapped implicitly; it is dropped before the mapped one is renamed into its place.
 - **Mappings are validated.** A mapped table or column that is missing from its schema or table, or that is mapped more than once on either side, throws `ArgumentException` when the migration runs.
+
+## Storing migrations as data
+
+A migration is fully described by its source, its target and its explicit mappings; the SQL is derived from them. Persist those instead of the SQL: implement `ISchemaMigration`, `ITableMapping` and `IColumnMapping` on your own stored types (for example EF Core entities, next to stored schema versions) and pass the migration to `PostgreSqlMigratedSchema(migration, connection)`. Tables and columns are matched by hash, so a stored mapping only needs to resolve to the source and target tables and columns with those hashes.
+
+Replay stored migrations in order. Replaying one that was already applied does nothing: its source storage is gone and creation skips what exists. Running one whose source was never stored creates empty target storage, so check that the stored version is the migration's source first.
 
 ## Default values
 
@@ -58,6 +67,7 @@ Added columns are `NOT NULL`, like every column the Creation package creates. Ex
 
 ## Dependencies
 
+- [`Pure.RelationalSchema.Migration.Abstractions`](https://github.com/kudima03/Pure.RelationalSchema.Migration.Abstractions/tree/0.1.0-preview.0.1.0) — `ISchemaMigration`, `ITableMapping` and `IColumnMapping`
 - [`Pure.RelationalSchema.Storage.PostgreSQL.Creation`](https://github.com/kudima03/Pure.RelationalSchema.Storage.PostgreSQL.Creation/tree/0.1.0-preview.0.4.0) — `PostgreSqlCreatedSchema`, which creates what is new in the target; brings in `Pure.RelationalSchema`, `Pure.RelationalSchema.HashCodes`, `Pure.Primitives.String.Operations`, `Pure.Primitives.Switches` and the primitives used to build the SQL
 
 The hash-based naming convention is the contract with the Creation, Querying and Insertion packages: migrated storage is found and read by them exactly like storage they created.
@@ -82,6 +92,7 @@ using Pure.RelationalSchema.Abstractions.Column;
 using Pure.RelationalSchema.Abstractions.Schema;
 using Pure.RelationalSchema.Abstractions.Table;
 using Pure.RelationalSchema.ColumnType;
+using Pure.RelationalSchema.Migration.Abstractions.SchemaMigration;
 using Pure.RelationalSchema.Storage.PostgreSQL.Migration;
 using Column = Pure.RelationalSchema.Column.Column;
 using Schema = Pure.RelationalSchema.Schema.Schema;
@@ -111,6 +122,20 @@ _ = new PostgreSqlMigratedSchema(
 ```
 
 `Id` maps itself because it is unchanged. Every stored row keeps its `Id`, its `Name` value moves to `Title`, and `Price` is `0`.
+
+The same migration as one value, for example after loading it from storage:
+
+```csharp
+ISchemaMigration migration = new SchemaMigration(
+    source,
+    target,
+    [new TableMapping(products, renamedProducts, [new ColumnMapping(name, title)])]
+);
+
+_ = new PostgreSqlMigratedSchema(migration, connection).Name;
+```
+
+`System.Data` also declares `ITableMapping` and `IColumnMapping`. In a file that imports both `System.Data` and the abstraction namespaces, alias what you need from `System.Data` (`using IDbConnection = System.Data.IDbConnection;`) instead of importing the whole namespace.
 
 ## Known limitations
 
