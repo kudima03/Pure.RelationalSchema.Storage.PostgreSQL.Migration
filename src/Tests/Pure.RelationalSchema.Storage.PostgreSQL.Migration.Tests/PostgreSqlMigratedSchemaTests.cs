@@ -8,7 +8,6 @@ using Pure.RelationalSchema.Abstractions.Table;
 using Pure.RelationalSchema.ColumnType;
 using Pure.RelationalSchema.HashCodes;
 using Pure.RelationalSchema.Storage.Abstractions;
-using Pure.RelationalSchema.Storage.PostgreSQL.Creation;
 using Pure.RelationalSchema.Storage.PostgreSQL.Querying;
 using String = Pure.Primitives.String.String;
 
@@ -130,7 +129,7 @@ public sealed record PostgreSqlMigratedSchemaTests : IClassFixture<DatabaseFixtu
     }
 
     [Fact]
-    public void DoesNothingWhenSourceIsNotStored()
+    public void CreatesEmptyTargetWhenSourceIsNotStored()
     {
         ITable table = new Table(
             new String("Items"),
@@ -143,7 +142,7 @@ public sealed record PostgreSqlMigratedSchemaTests : IClassFixture<DatabaseFixtu
         _ = new PostgreSqlMigratedSchema(source, target, _fixture.Connection).Name;
 
         Assert.False(_fixture.SchemaExists(source));
-        Assert.False(_fixture.SchemaExists(target));
+        Assert.Empty(_fixture.Values(target, table, table.Columns.Single()));
     }
 
     [Fact]
@@ -210,12 +209,12 @@ public sealed record PostgreSqlMigratedSchemaTests : IClassFixture<DatabaseFixtu
         ISchema source = Schema(nameof(DropsChangedTableThatIsNotMapped), [sourceTable]);
         ISchema target = Schema(nameof(DropsChangedTableThatIsNotMapped), [targetTable]);
         _fixture.Store(source);
+        _fixture.Insert(source, sourceTable, "1");
 
         _ = new PostgreSqlMigratedSchema(source, target, _fixture.Connection).Name;
 
-        Assert.True(_fixture.SchemaExists(target));
         Assert.False(_fixture.TableExists(target, sourceTable));
-        Assert.False(_fixture.TableExists(target, targetTable));
+        Assert.Empty(_fixture.Values(target, targetTable, id));
     }
 
     [Theory]
@@ -482,7 +481,44 @@ public sealed record PostgreSqlMigratedSchemaTests : IClassFixture<DatabaseFixtu
     }
 
     [Fact]
-    public void CreationCompletesMigratedSchema()
+    public void RecreatesForeignKeyOfChangedTable()
+    {
+        IColumn id = Column("Id", new IntColumnType());
+        IColumn note = Column("Note", new StringColumnType());
+        ITable parent = new Table(
+            new String("Parent"),
+            [id],
+            [new Index(new True(), [id])]
+        );
+        ITable sourceChild = new Table(new String("Child"), [id], []);
+        ITable targetChild = new Table(new String("Child"), [id, note], []);
+        ISchema source = new Schema(
+            new String(nameof(RecreatesForeignKeyOfChangedTable)),
+            [parent, sourceChild],
+            [new ForeignKey(sourceChild, [id], parent, [id])]
+        );
+        ISchema target = new Schema(
+            new String(nameof(RecreatesForeignKeyOfChangedTable)),
+            [parent, targetChild],
+            [new ForeignKey(targetChild, [id], parent, [id])]
+        );
+        _fixture.Store(source);
+        _fixture.Insert(source, parent, "1");
+        _fixture.Insert(source, sourceChild, "1");
+
+        _ = new PostgreSqlMigratedSchema(
+            source,
+            target,
+            [new TableMapping(sourceChild, targetChild)],
+            _fixture.Connection
+        ).Name;
+
+        Assert.Equal(1, _fixture.ForeignKeyCount(target));
+        Assert.Equal(["1"], _fixture.Values(target, targetChild, id));
+    }
+
+    [Fact]
+    public void CreatesTablesAndIndexesNewInTarget()
     {
         IColumn id = Column("Id", new IntColumnType());
         IColumn code = Column("Code", new StringColumnType());
@@ -493,21 +529,21 @@ public sealed record PostgreSqlMigratedSchemaTests : IClassFixture<DatabaseFixtu
             [new Index(new False(), [code])]
         );
         ITable tags = new Table(new String("Tags"), [code], []);
-        ISchema source = Schema(nameof(CreationCompletesMigratedSchema), [sourceTable]);
+        ISchema source = Schema(
+            nameof(CreatesTablesAndIndexesNewInTarget),
+            [sourceTable]
+        );
         ISchema target = Schema(
-            nameof(CreationCompletesMigratedSchema),
+            nameof(CreatesTablesAndIndexesNewInTarget),
             [targetTable, tags]
         );
         _fixture.Store(source);
         _fixture.Insert(source, sourceTable, "1");
 
-        _ = new PostgreSqlCreatedSchema(
-            new PostgreSqlMigratedSchema(
-                source,
-                target,
-                [new TableMapping(sourceTable, targetTable)],
-                _fixture.Connection
-            ),
+        _ = new PostgreSqlMigratedSchema(
+            source,
+            target,
+            [new TableMapping(sourceTable, targetTable)],
             _fixture.Connection
         ).Name;
 

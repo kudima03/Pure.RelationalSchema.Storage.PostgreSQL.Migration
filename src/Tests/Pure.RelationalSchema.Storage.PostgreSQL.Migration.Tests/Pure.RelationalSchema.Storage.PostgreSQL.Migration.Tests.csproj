@@ -13,10 +13,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <PackageReference Include="Npgsql" Version="10.0.3" />
     <PackageReference
-      Include="Pure.RelationalSchema.Storage.PostgreSQL.Creation"
-      Version="0.1.0-preview.0.4.0"
-    />
-    <PackageReference
       Include="Pure.RelationalSchema.Storage.PostgreSQL.Querying"
       Version="0.1.0-preview.0.5.0"
     />
