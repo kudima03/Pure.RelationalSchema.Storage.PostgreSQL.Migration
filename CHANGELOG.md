@@ -1,8 +1,13 @@
 # Changelog
 
-All notable changes to `<repo-name>` are documented in this file.
+All notable changes to `Pure.RelationalSchema.Storage.PostgreSQL.Migration` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Added
+
+- Schema migration: `PostgreSqlMigratedSchema` lazily migrates the stored data of a source schema to a target schema. One `DO` block drops foreign keys, indexes, tables and columns missing from the target, renames mapped columns and changes their type with a cast, adds new columns filled with the column type's default value, and renames tables and the schema; `PostgreSqlCreatedSchema` then creates the new tables, indexes and foreign keys. A source that was never stored yields empty target storage.
+- `TableMapping` / `ITableMapping` and `ColumnMapping` / `IColumnMapping` pair changed tables and columns. Unchanged tables and columns map themselves; invalid or duplicate mappings throw `ArgumentException`.
