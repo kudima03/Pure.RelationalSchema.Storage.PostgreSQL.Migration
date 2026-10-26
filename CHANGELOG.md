@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-preview.0.1.0] - 2026-10-26
+
 ### Added
 
 - Schema migration: `PostgreSqlMigratedSchema` lazily migrates the stored data of a source schema to a target schema. One `DO` block drops foreign keys, indexes, tables and columns missing from the target, renames mapped columns and changes their type with a cast, adds new columns filled with the column type's default value, and renames tables and the schema; `PostgreSqlCreatedSchema` then creates the new tables, indexes and foreign keys. A source that was never stored yields empty target storage.
