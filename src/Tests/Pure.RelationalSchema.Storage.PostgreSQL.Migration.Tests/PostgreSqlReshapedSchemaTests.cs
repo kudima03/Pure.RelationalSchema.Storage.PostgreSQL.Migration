@@ -24,7 +24,10 @@ public sealed record PostgreSqlReshapedSchemaTests : IClassFixture<DatabaseFixtu
         ISchema source = Stored("ReshapedNameSource");
         ISchema target = Renamed(source, "ReshapedNameTarget");
 
-        _ = new PostgreSqlReshapedSchema(source, target, [], _fixture.Connection).Name;
+        _ = new PostgreSqlReshapedSchema(
+            new SchemaMigration(source, target),
+            _fixture.Connection
+        ).Name;
 
         Assert.False(_fixture.SchemaExists(source));
         Assert.True(_fixture.SchemaExists(target));
@@ -36,7 +39,10 @@ public sealed record PostgreSqlReshapedSchemaTests : IClassFixture<DatabaseFixtu
         ISchema source = Stored("ReshapedTablesSource");
         ISchema target = Renamed(source, "ReshapedTablesTarget");
 
-        _ = new PostgreSqlReshapedSchema(source, target, [], _fixture.Connection).Tables;
+        _ = new PostgreSqlReshapedSchema(
+            new SchemaMigration(source, target),
+            _fixture.Connection
+        ).Tables;
 
         Assert.False(_fixture.SchemaExists(source));
         Assert.True(_fixture.SchemaExists(target));
@@ -49,9 +55,7 @@ public sealed record PostgreSqlReshapedSchemaTests : IClassFixture<DatabaseFixtu
         ISchema target = Renamed(source, "ReshapedForeignKeysTarget");
 
         _ = new PostgreSqlReshapedSchema(
-            source,
-            target,
-            [],
+            new SchemaMigration(source, target),
             _fixture.Connection
         ).ForeignKeys;
 

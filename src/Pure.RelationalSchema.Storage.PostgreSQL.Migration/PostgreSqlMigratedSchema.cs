@@ -1,9 +1,11 @@
-using System.Data;
 using Pure.Primitives.Abstractions.String;
 using Pure.RelationalSchema.Abstractions.ForeignKey;
 using Pure.RelationalSchema.Abstractions.Schema;
 using Pure.RelationalSchema.Abstractions.Table;
+using Pure.RelationalSchema.Migration.Abstractions.SchemaMigration;
+using Pure.RelationalSchema.Migration.Abstractions.TableMapping;
 using Pure.RelationalSchema.Storage.PostgreSQL.Creation;
+using IDbConnection = System.Data.IDbConnection;
 
 namespace Pure.RelationalSchema.Storage.PostgreSQL.Migration;
 
@@ -16,7 +18,7 @@ public sealed record PostgreSqlMigratedSchema : ISchema
         ISchema target,
         IDbConnection connection
     )
-        : this(source, target, [], connection)
+        : this(new SchemaMigration(source, target), connection)
     { }
 
     public PostgreSqlMigratedSchema(
@@ -25,9 +27,13 @@ public sealed record PostgreSqlMigratedSchema : ISchema
         IEnumerable<ITableMapping> tables,
         IDbConnection connection
     )
+        : this(new SchemaMigration(source, target, tables), connection)
+    { }
+
+    public PostgreSqlMigratedSchema(ISchemaMigration migration, IDbConnection connection)
         : this(
             new PostgreSqlCreatedSchema(
-                new PostgreSqlReshapedSchema(source, target, tables, connection),
+                new PostgreSqlReshapedSchema(migration, connection),
                 connection
             )
         )
