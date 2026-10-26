@@ -1,5 +1,7 @@
 using System.Collections;
 using Pure.Primitives.Abstractions.String;
+using Pure.RelationalSchema.Migration.Abstractions.ColumnMapping;
+using Pure.RelationalSchema.Migration.Abstractions.TableMapping;
 
 namespace Pure.RelationalSchema.Storage.PostgreSQL.Migration;
 

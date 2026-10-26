@@ -1,4 +1,6 @@
 using Pure.RelationalSchema.Abstractions.Table;
+using Pure.RelationalSchema.Migration.Abstractions.ColumnMapping;
+using Pure.RelationalSchema.Migration.Abstractions.TableMapping;
 
 namespace Pure.RelationalSchema.Storage.PostgreSQL.Migration;
 

@@ -21,6 +21,10 @@
       Include="Pure.RelationalSchema.Storage.PostgreSQL.Creation"
       Version="0.1.0-preview.0.4.0"
     />
+    <PackageReference
+      Include="Pure.RelationalSchema.Migration.Abstractions"
+      Version="0.1.0-preview.0.1.0"
+    />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Pure.RelationalSchema.Storage.PostgreSQL.Migration.Tests" />

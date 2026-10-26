@@ -2,6 +2,7 @@ using System.Collections;
 using Pure.Primitives.Abstractions.Char;
 using Pure.Primitives.Abstractions.String;
 using Pure.RelationalSchema.Abstractions.Schema;
+using Pure.RelationalSchema.Migration.Abstractions.TableMapping;
 using Char = Pure.Primitives.Char.Char;
 
 namespace Pure.RelationalSchema.Storage.PostgreSQL.Migration;

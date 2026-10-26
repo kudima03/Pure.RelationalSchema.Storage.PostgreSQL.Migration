@@ -7,6 +7,7 @@ using Pure.RelationalSchema.Abstractions.Schema;
 using Pure.RelationalSchema.Abstractions.Table;
 using Pure.RelationalSchema.ColumnType;
 using Pure.RelationalSchema.HashCodes;
+using Pure.RelationalSchema.Migration.Abstractions.TableMapping;
 using Pure.RelationalSchema.Storage.Abstractions;
 using Pure.RelationalSchema.Storage.PostgreSQL.Querying;
 using String = Pure.Primitives.String.String;
@@ -295,6 +296,37 @@ public sealed record PostgreSqlMigratedSchemaTests : IClassFixture<DatabaseFixtu
                     [new ColumnMapping(name, title)]
                 ),
             ],
+            _fixture.Connection
+        ).Name;
+
+        Assert.False(_fixture.ColumnExists(target, targetTable, name));
+        Assert.Equal(["a"], _fixture.Values(target, targetTable, title));
+    }
+
+    [Fact]
+    public void MigratesSchemaMigrationValue()
+    {
+        IColumn name = Column("Name", new StringColumnType());
+        IColumn title = Column("Title", new StringColumnType());
+        ITable sourceTable = new Table(new String("Items"), [name], []);
+        ITable targetTable = new Table(new String("Items"), [title], []);
+        ISchema source = Schema(nameof(MigratesSchemaMigrationValue), [sourceTable]);
+        ISchema target = Schema(nameof(MigratesSchemaMigrationValue), [targetTable]);
+        _fixture.Store(source);
+        _fixture.Insert(source, sourceTable, "a");
+
+        _ = new PostgreSqlMigratedSchema(
+            new SchemaMigration(
+                source,
+                target,
+                [
+                    new TableMapping(
+                        sourceTable,
+                        targetTable,
+                        [new ColumnMapping(name, title)]
+                    ),
+                ]
+            ),
             _fixture.Connection
         ).Name;
 

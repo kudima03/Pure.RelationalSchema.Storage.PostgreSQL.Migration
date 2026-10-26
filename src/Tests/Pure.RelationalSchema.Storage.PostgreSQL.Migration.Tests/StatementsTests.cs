@@ -10,6 +10,8 @@ using Pure.RelationalSchema.Abstractions.Schema;
 using Pure.RelationalSchema.Abstractions.Table;
 using Pure.RelationalSchema.ColumnType;
 using Pure.RelationalSchema.HashCodes;
+using Pure.RelationalSchema.Migration.Abstractions.ColumnMapping;
+using Pure.RelationalSchema.Migration.Abstractions.TableMapping;
 using Pure.RelationalSchema.Storage.PostgreSQL.Migration.Tests.Fakes;
 using String = Pure.Primitives.String.String;
 
