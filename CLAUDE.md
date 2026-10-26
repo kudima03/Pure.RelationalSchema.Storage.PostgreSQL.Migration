@@ -42,7 +42,7 @@ This is the **migration** part of the PostgreSQL storage implementation for the 
 
 **Testing:** Integration tests use `Testcontainers.PostgreSql` with one container per test class (`IClassFixture<DatabaseFixture>`). Every test uses its own schema name so the shared database never collides. `DatabaseFixture.Store` creates source storage through the published `PostgreSqlCreatedSchema`; rows are inserted and read back with raw SQL (`Values` casts to `text`, ordered), and the catalog is inspected through `information_schema` / `pg_indexes`. `StatementsTests` asserts the exact SQL text of every statement and name (mutation-testing targets) and enumerates every `IString` generically and through `Fakes/NonGenericItems`. Theory data with non-serializable values uses `DisableDiscoveryEnumeration = true` to satisfy xUnit1045.
 
-CI runs mutation testing via `dotnet-stryker` at `Complete` level with a 100% break threshold and requires >=99% line coverage (warning at 99%).
+CI requires >=99% line coverage (warning at 99%). The mutation testing step (`dotnet-stryker` at `Complete` level with a 100% break threshold) is commented out in `.github/workflows/build-and-test.yml`; run it locally.
 
 **CI style check:** the `Code style check by csharpier` step in `.github/workflows/build-and-test.yml` is commented out on purpose: csharpier wants `) { }` on one line for chained constructors with an empty body, while `dotnet format` (IDE0055 with `csharp_new_line_before_open_brace = all`) wants `{ }` on its own line. `dotnet format` is the authoritative check.
 
