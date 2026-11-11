@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-preview.1.0.0] - 2026-11-11
+
+### Added
+
+- Support for .NET 11: the package now targets `net8.0`, `net9.0`, `net10.0` and `net11.0`.
+
+### Changed
+
+- Update `Pure.RelationalSchema.Storage.PostgreSQL.Creation` to `0.1.0-preview.1.0.0` and `Pure.RelationalSchema.Migration.Abstractions` to `0.1.0-preview.0.2.0`.
+- CI builds and tests with the .NET 11 SDK.
+
 ## [0.1.0-preview.0.1.0] - 2026-10-26
 
 ### Added
