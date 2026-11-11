@@ -47,7 +47,7 @@ CI requires >=99% line coverage (warning at 99%). The mutation testing step (`do
 
 **CI style check:** the `Code style check by csharpier` step in `.github/workflows/build-and-test.yml` is commented out on purpose: csharpier wants `) { }` on one line for chained constructors with an empty body, while `dotnet format` (IDE0055 with `csharp_new_line_before_open_brace = all`) wants `{ }` on its own line. `dotnet format` is the authoritative check.
 
-**Multi-targeting:** net8.0, net9.0, net10.0. `IsAotCompatible` is `true` and the build must stay free of IL2026/IL3050 warnings.
+**Multi-targeting:** net8.0, net9.0, net10.0, net11.0. `IsAotCompatible` is `true` and the build must stay free of IL2026/IL3050 warnings.
 
 **Package validation:** `EnablePackageValidation = true`. Set `PackageValidationBaselineVersion` to the last published version after the first release, and update it after each release so breaking API changes fail the build.
 
