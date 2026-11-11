@@ -77,6 +77,7 @@ The hash-based naming convention is the contract with the Creation, Querying and
 - .NET 8
 - .NET 9
 - .NET 10
+- .NET 11
 
 ## Installation
 
